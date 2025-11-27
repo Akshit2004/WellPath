@@ -9,8 +9,10 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { sendToNative } from "@/lib/nativeBridge";
 
 interface AuthContextType {
   user: User | null;
@@ -31,6 +33,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
+      
+      // Notify native app of auth state change
+      if (user) {
+        sendToNative("AUTH_STATE_CHANGE", { 
+          isAuthenticated: true, 
+          uid: user.uid, 
+          email: user.email 
+        });
+      } else {
+        sendToNative("AUTH_STATE_CHANGE", { 
+          isAuthenticated: false 
+        });
+      }
     });
 
     return unsubscribe;
@@ -46,7 +61,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    
+    // Check if running in React Native WebView
+    if (typeof window !== "undefined" && window.ReactNativeWebView) {
+      await signInWithRedirect(auth, provider);
+    } else {
+      await signInWithPopup(auth, provider);
+    }
   };
 
   const logout = async () => {

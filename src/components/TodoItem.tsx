@@ -47,12 +47,45 @@ export default function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    gsap.to(itemRef.current, {
-      x: 100,
-      opacity: 0,
+    
+    // Create a crazy multi-stage delete animation
+    const tl = gsap.timeline({
+      onComplete: () => onDelete(todo.id),
+    });
+
+    // Stage 1: Shake violently
+    tl.to(itemRef.current, {
+      x: -10,
+      duration: 0.05,
+      repeat: 3,
+      yoyo: true,
+      ease: "power2.inOut",
+    })
+    // Stage 2: Spin and shrink with color change
+    .to(itemRef.current, {
+      rotation: 360,
+      scale: 0.8,
+      backgroundColor: "#fee2e2",
       duration: 0.3,
       ease: "power2.in",
-      onComplete: () => onDelete(todo.id),
+    }, "+=0.05")
+    // Stage 3: Explode outward with blur
+    .to(itemRef.current, {
+      scale: 1.2,
+      opacity: 0.5,
+      filter: "blur(5px)",
+      duration: 0.15,
+      ease: "power2.out",
+    })
+    // Stage 4: Implode and disappear
+    .to(itemRef.current, {
+      scale: 0,
+      rotation: 720,
+      opacity: 0,
+      x: 200,
+      filter: "blur(10px)",
+      duration: 0.3,
+      ease: "back.in(2)",
     });
   };
 
