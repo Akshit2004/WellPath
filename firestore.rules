@@ -53,6 +53,11 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId);
       allow write: if isOwner(userId);
+      
+      // Notes subcollection rules
+      match /notes/{noteId} {
+        allow read, write: if isOwner(userId);
+      }
     }
     
     // Deny all other access

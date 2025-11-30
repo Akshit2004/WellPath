@@ -47,10 +47,21 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   const [isSelectionMode, setSelectionMode] = useState(false);
   const { user } = useAuth();
 
-  // Subscribe to Firestore updates
+  // Subscribe to Firestore updates or use Local Storage
   useEffect(() => {
     if (!user) {
-      if (todos.length > 0) setTodos([]);
+      // Load from local storage
+      const savedTodos = localStorage.getItem("local_todos");
+      if (savedTodos) {
+        try {
+          setTodos(JSON.parse(savedTodos));
+        } catch (e) {
+          console.error("Failed to parse local todos", e);
+          setTodos([]);
+        }
+      } else {
+        setTodos([]);
+      }
       setLoading(false);
       return;
     }
@@ -66,11 +77,15 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, [user]);
 
+  // Helper to save to local storage
+  const saveToLocalStorage = (newTodos: Todo[]) => {
+    localStorage.setItem("local_todos", JSON.stringify(newTodos));
+    setTodos(newTodos);
+  };
+
   const addTodo = async (text: string, priority: Todo["priority"] = "medium", dueDate: number | null = null) => {
-    if (!user) return;
-    
     const maxOrder = todos.length > 0 ? Math.max(...todos.map(t => t.order)) : -1;
-    const newTodo: Omit<Todo, "id"> = {
+    const newTodoData = {
       text,
       completed: false,
       createdAt: Date.now(),
@@ -78,27 +93,60 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
       dueDate,
       order: maxOrder + 1,
     };
+
+    if (!user) {
+      const newTodo: Todo = {
+        ...newTodoData,
+        id: Date.now().toString(), // Simple ID for local todos
+      };
+      saveToLocalStorage([...todos, newTodo]);
+      return;
+    }
     
-    await todoService.addTodo(user.uid, newTodo);
+    await todoService.addTodo(user.uid, newTodoData);
   };
 
   const toggleTodo = async (id: string) => {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
     
+    if (!user) {
+      const updatedTodos = todos.map(t => 
+        t.id === id ? { ...t, completed: !t.completed } : t
+      );
+      saveToLocalStorage(updatedTodos);
+      return;
+    }
+
     await todoService.updateTodo(id, { completed: !todo.completed });
   };
 
   const deleteTodo = async (id: string) => {
+    if (!user) {
+      const updatedTodos = todos.filter(t => t.id !== id);
+      saveToLocalStorage(updatedTodos);
+      return;
+    }
     await todoService.deleteTodo(id);
   };
 
   const updateTodo = async (id: string, updates: Partial<Todo>) => {
+    if (!user) {
+      const updatedTodos = todos.map(t => 
+        t.id === id ? { ...t, ...updates } : t
+      );
+      saveToLocalStorage(updatedTodos);
+      return;
+    }
     await todoService.updateTodo(id, updates);
   };
 
   const clearCompleted = async () => {
-    if (!user) return;
+    if (!user) {
+      const updatedTodos = todos.filter(t => !t.completed);
+      saveToLocalStorage(updatedTodos);
+      return;
+    }
     
     const completedIds = todos.filter((t) => t.completed).map((t) => t.id);
     await todoService.clearCompleted(user.uid, completedIds);
@@ -116,12 +164,28 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   };
 
   const bulkComplete = async () => {
+    if (!user) {
+      const updatedTodos = todos.map(t => 
+        selectedTodos.includes(t.id) ? { ...t, completed: true } : t
+      );
+      saveToLocalStorage(updatedTodos);
+      clearSelection();
+      return;
+    }
+
     const updates = selectedTodos.map(id => todoService.updateTodo(id, { completed: true }));
     await Promise.all(updates);
     clearSelection();
   };
 
   const bulkDelete = async () => {
+    if (!user) {
+      const updatedTodos = todos.filter(t => !selectedTodos.includes(t.id));
+      saveToLocalStorage(updatedTodos);
+      clearSelection();
+      return;
+    }
+
     const deletes = selectedTodos.map(id => todoService.deleteTodo(id));
     await Promise.all(deletes);
     clearSelection();
@@ -131,6 +195,13 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     // Update local state immediately for smooth UX
     setTodos(reorderedTodos);
     
+    if (!user) {
+      // Update order in local storage
+      const updatedTodos = reorderedTodos.map((todo, index) => ({ ...todo, order: index }));
+      saveToLocalStorage(updatedTodos);
+      return;
+    }
+
     // Update order in Firestore
     const updates = reorderedTodos.map((todo, index) => 
       todoService.updateTodo(todo.id, { order: index })

@@ -174,12 +174,28 @@ export default function TaskDetailModal() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div className="p-3 sm:p-4 rounded-2xl bg-gray-50 border border-gray-100">
-              <div className="flex items-center gap-2 text-gray-500 mb-1">
+
+            <div className={cn(
+              "p-3 sm:p-4 rounded-2xl border transition-colors",
+              !viewingTask.completed && viewingTask.dueDate && viewingTask.dueDate < Date.now()
+                ? "bg-red-50 border-red-100"
+                : "bg-gray-50 border-gray-100"
+            )}>
+              <div className={cn(
+                "flex items-center gap-2 mb-1",
+                !viewingTask.completed && viewingTask.dueDate && viewingTask.dueDate < Date.now()
+                  ? "text-red-600"
+                  : "text-gray-500"
+              )}>
                 <Calendar size={14} className="sm:w-4 sm:h-4" />
                 <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider">Due Date</span>
               </div>
-              <p className="font-medium text-gray-900 text-sm sm:text-base">
+              <p className={cn(
+                "font-medium text-sm sm:text-base",
+                !viewingTask.completed && viewingTask.dueDate && viewingTask.dueDate < Date.now()
+                  ? "text-red-700"
+                  : "text-gray-900"
+              )}>
                 {viewingTask.dueDate
                   ? new Date(viewingTask.dueDate).toLocaleDateString(undefined, { 
                       weekday: "short", 
@@ -190,14 +206,34 @@ export default function TaskDetailModal() {
                   : "No deadline"}
               </p>
             </div>
-            <div className="p-3 sm:p-4 rounded-2xl bg-gray-50 border border-gray-100">
-              <div className="flex items-center gap-2 text-gray-500 mb-1">
+            <div className={cn(
+              "p-3 sm:p-4 rounded-2xl border transition-colors",
+              !viewingTask.completed && viewingTask.dueDate && viewingTask.dueDate < Date.now()
+                ? "bg-red-50 border-red-100"
+                : "bg-gray-50 border-gray-100"
+            )}>
+              <div className={cn(
+                "flex items-center gap-2 mb-1",
+                !viewingTask.completed && viewingTask.dueDate && viewingTask.dueDate < Date.now()
+                  ? "text-red-600"
+                  : "text-gray-500"
+              )}>
                 <AlertCircle size={14} className="sm:w-4 sm:h-4" />
                 <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider">Status</span>
               </div>
-              <p className={cn("font-medium text-sm sm:text-base", viewingTask.completed ? "text-green-600" : "text-yellow-600")}
-              >
-                {viewingTask.completed ? "Completed" : "In Progress"}
+              <p className={cn(
+                "font-medium text-sm sm:text-base", 
+                viewingTask.completed 
+                  ? "text-green-600" 
+                  : viewingTask.dueDate && viewingTask.dueDate < Date.now()
+                    ? "text-red-600"
+                    : "text-yellow-600"
+              )}>
+                {viewingTask.completed 
+                  ? "Completed" 
+                  : viewingTask.dueDate && viewingTask.dueDate < Date.now()
+                    ? "Overdue"
+                    : "In Progress"}
               </p>
             </div>
           </div>

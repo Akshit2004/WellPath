@@ -156,9 +156,19 @@ export default function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
           </div>
           
           {todo.dueDate && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className={cn(
+              "flex items-center gap-1 text-xs transition-colors",
+              !todo.completed && todo.dueDate < Date.now() 
+                ? "text-red-500 font-medium" 
+                : "text-muted-foreground"
+            )}>
               <Calendar size={12} />
               <span>{new Date(todo.dueDate).toLocaleDateString()}</span>
+              {!todo.completed && todo.dueDate < Date.now() && (
+                <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full ml-1">
+                  Overdue
+                </span>
+              )}
             </div>
           )}
         </div>

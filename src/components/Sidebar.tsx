@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, User, LogOut, CheckSquare, Plus, X } from "lucide-react";
+import { Home, User, LogOut, CheckSquare, Plus, X, StickyNote } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { useTodo } from "@/context/TodoContext";
@@ -38,6 +38,7 @@ export default function Sidebar() {
 
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Dashboard" },
+    { href: "/notes", icon: StickyNote, label: "Notes" },
     { href: "/profile", icon: User, label: "Profile" },
   ];
 
@@ -76,85 +77,140 @@ export default function Sidebar() {
         </nav>
 
         <div className="border-t border-gray-100 pt-4 space-y-3">
-          <div className="px-4 py-2">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {user?.email}
-            </p>
-            <p className="text-xs text-gray-500">Signed in</p>
-          </div>
-          
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all w-full"
-          >
-            <LogOut size={20} />
-            <span className="font-medium">Sign Out</span>
-          </button>
+          {user ? (
+            <>
+              <div className="px-4 py-2">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user.email}
+                </p>
+                <p className="text-xs text-gray-500">Signed in</p>
+              </div>
+              
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all w-full"
+              >
+                <LogOut size={20} />
+                <span className="font-medium">Sign Out</span>
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-primary hover:bg-primary/5 transition-all w-full"
+            >
+              <LogOut size={20} className="rotate-180" />
+              <span className="font-medium">Sign In</span>
+            </Link>
+          )}
         </div>
       </aside>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-inset-bottom overflow-visible">
-        {/* Glass Background */}
-        <div className="absolute inset-0 bg-white/90 backdrop-blur-xl border-t border-white/40 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]" />
-        
-        <div className="relative flex items-center justify-around px-6 py-2 h-20">
-          {/* Dashboard Link */}
-          <Link
-            href="/dashboard"
-            className="mobile-nav-item flex flex-col items-center gap-1 p-2 relative group"
-          >
-            <div className={cn(
-              "p-2 rounded-xl transition-all duration-300",
-              pathname === "/dashboard" ? "bg-primary/10 text-primary" : "text-gray-400"
-            )}>
-              <Home size={24} strokeWidth={pathname === "/dashboard" ? 2.5 : 2} />
-            </div>
-            <span className={cn(
-              "text-[10px] font-medium transition-colors duration-300",
-              pathname === "/dashboard" ? "text-primary" : "text-gray-400"
-            )}>
-              Home
-            </span>
-          </Link>
+      <div className="md:hidden fixed bottom-6 left-4 right-4 z-50 flex justify-center safe-area-inset-bottom pointer-events-none">
+        <nav className="w-full max-w-sm bg-white/90 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/5 rounded-2xl pointer-events-auto overflow-hidden">
+          <div className="flex items-center justify-between px-2 py-2">
+            {/* Dashboard Link */}
+            <Link
+              href="/dashboard"
+              className="flex-1 flex flex-col items-center gap-1 py-2 relative group"
+            >
+              <div className={cn(
+                "p-2 rounded-xl transition-all duration-300",
+                pathname === "/dashboard" 
+                  ? "bg-primary text-white shadow-lg shadow-primary/25 translate-y-[-2px]" 
+                  : "text-gray-400 hover:bg-gray-50"
+              )}>
+                <Home size={20} strokeWidth={pathname === "/dashboard" ? 2.5 : 2} />
+              </div>
+              <span className={cn(
+                "text-[10px] font-medium transition-all duration-300 absolute -bottom-1",
+                pathname === "/dashboard" 
+                  ? "opacity-100 translate-y-0 text-primary" 
+                  : "opacity-0 translate-y-2 text-gray-400"
+              )}>
+                Home
+              </span>
+            </Link>
 
-          {/* Add Button - Centered & Floating */}
-          <div className="relative -top-6">
+            {/* Notes Link */}
+            <Link
+              href="/notes"
+              className="flex-1 flex flex-col items-center gap-1 py-2 relative group"
+            >
+              <div className={cn(
+                "p-2 rounded-xl transition-all duration-300",
+                pathname === "/notes" 
+                  ? "bg-primary text-white shadow-lg shadow-primary/25 translate-y-[-2px]" 
+                  : "text-gray-400 hover:bg-gray-50"
+              )}>
+                <StickyNote size={20} strokeWidth={pathname === "/notes" ? 2.5 : 2} />
+              </div>
+              <span className={cn(
+                "text-[10px] font-medium transition-all duration-300 absolute -bottom-1",
+                pathname === "/notes" 
+                  ? "opacity-100 translate-y-0 text-primary" 
+                  : "opacity-0 translate-y-2 text-gray-400"
+              )}>
+                Notes
+              </span>
+            </Link>
+
+            {/* Add Button */}
             <button
               onClick={() => setAddModalOpen(!isAddModalOpen)}
-              className="mobile-add-btn w-16 h-16 bg-gradient-to-tr from-primary to-accent rounded-full flex items-center justify-center shadow-lg shadow-primary/40 text-white border-4 border-background transition-transform active:scale-95"
+              className="flex-1 flex flex-col items-center gap-1 py-2 relative group"
             >
-              <Plus 
-                size={32} 
-                strokeWidth={3} 
-                className={cn(
-                  "transition-transform duration-300",
-                  isAddModalOpen ? "rotate-45" : "rotate-0"
-                )} 
-              />
+              <div className={cn(
+                "p-2 rounded-xl transition-all duration-300",
+                isAddModalOpen 
+                  ? "bg-primary text-white shadow-lg shadow-primary/25 translate-y-[-2px]" 
+                  : "text-gray-400 hover:bg-gray-50"
+              )}>
+                <Plus 
+                  size={20} 
+                  strokeWidth={isAddModalOpen ? 2.5 : 2}
+                  className={cn(
+                    "transition-transform duration-300",
+                    isAddModalOpen ? "rotate-45" : "rotate-0"
+                  )} 
+                />
+              </div>
+              <span className={cn(
+                "text-[10px] font-medium transition-all duration-300 absolute -bottom-1",
+                isAddModalOpen 
+                  ? "opacity-100 translate-y-0 text-primary" 
+                  : "opacity-0 translate-y-2 text-gray-400"
+              )}>
+                Add
+              </span>
             </button>
-          </div>
 
-          {/* Profile Link */}
-          <Link
-            href="/profile"
-            className="mobile-nav-item flex flex-col items-center gap-1 p-2 relative group"
-          >
-            <div className={cn(
-              "p-2 rounded-xl transition-all duration-300",
-              pathname === "/profile" ? "bg-primary/10 text-primary" : "text-gray-400"
-            )}>
-              <User size={24} strokeWidth={pathname === "/profile" ? 2.5 : 2} />
-            </div>
-            <span className={cn(
-              "text-[10px] font-medium transition-colors duration-300",
-              pathname === "/profile" ? "text-primary" : "text-gray-400"
-            )}>
-              Profile
-            </span>
-          </Link>
-        </div>
-      </nav>
+            {/* Profile Link */}
+            <Link
+              href="/profile"
+              className="flex-1 flex flex-col items-center gap-1 py-2 relative group"
+            >
+              <div className={cn(
+                "p-2 rounded-xl transition-all duration-300",
+                pathname === "/profile" 
+                  ? "bg-primary text-white shadow-lg shadow-primary/25 translate-y-[-2px]" 
+                  : "text-gray-400 hover:bg-gray-50"
+              )}>
+                <User size={20} strokeWidth={pathname === "/profile" ? 2.5 : 2} />
+              </div>
+              <span className={cn(
+                "text-[10px] font-medium transition-all duration-300 absolute -bottom-1",
+                pathname === "/profile" 
+                  ? "opacity-100 translate-y-0 text-primary" 
+                  : "opacity-0 translate-y-2 text-gray-400"
+              )}>
+                Profile
+              </span>
+            </Link>
+          </div>
+        </nav>
+      </div>
     </>
   );
 }
